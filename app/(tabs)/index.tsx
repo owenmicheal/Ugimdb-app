@@ -15,10 +15,17 @@ import useFetch from "@/services/useFetch";
 import { fetchMovie } from "@/services/api";
 import MovieCard from "@/components/MovieCard";
 import { useState } from "react";
+import { getTrendingMovies } from "@/services/appwrite";
+import TrendingCard from "@/components/TrendingCard";
 
 export default function Index() {
   const router = useRouter();
-  const [searchText, setSearchText] = useState("");
+
+  const {
+    data: trendingMovies,
+    loading: trendingLoading,
+    Error: trendingError,
+  } = useFetch(getTrendingMovies);
 
   const {
     data: movies,
@@ -38,14 +45,14 @@ export default function Index() {
       >
         <Image source={icons.red} className="w-20 h-12 mt-20 mb-5 mx-auto" />
 
-        {moviesLoading ? (
+        {moviesLoading || trendingLoading ? (
           <ActivityIndicator
             size="large"
             color="#0000ff"
             className="mt-10 self-center"
           />
-        ) : moviesError ? (
-          <Text>Error: {moviesError?.message}</Text>
+        ) : moviesError || trendingError ? (
+          <Text>Error: {moviesError?.message || trendingError?.message}</Text>
         ) : (
           <View className="flex-1 mt-5 ">
             <SearchBar
@@ -53,7 +60,27 @@ export default function Index() {
               placeholder="Search Movie"
             />
 
+            {trendingMovies && (
+              <View className="mt-10">
+                <Text className="text-lg text-white font-bold mb-3">
+                  Trending Movies
+                </Text>
+              </View>
+            )}
+
             <>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                ItemSeparatorComponent={() => <View className="w-4" />}
+                data={trendingMovies}
+                renderItem={({ item, index }) => (
+                  <TrendingCard movie={item} index={index} />
+                )}
+                keyExtractor={(item) => item.movie_id.toString()}
+                className="mb-4 mt-3"
+              />
+
               <Text className="text-lg text-white font-bold mt-5 mb-3">
                 Latest Movies
               </Text>
